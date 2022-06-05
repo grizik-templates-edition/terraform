@@ -1,47 +1,46 @@
-locals {
-  services = [
-    "cloudresourcemanager.googleapis.com",
-    "storage-component.googleapis.com",
-    "storage-api.googleapis.com",
-    "storage.googleapis.com",
-    "iam.googleapis.com",
-  ]
+provider "google" {
+  project = var.project_id
+  credentials = var.service_token
+  region = var.region
+  zone = var.zone
+
 }
 
 # Enables the Cloud Run API
-resource "google_project_service" "apis" {
-  for_each = toset(local.services)
-  service = each.key
+resource "google_project_service" "run_api" {
+  service = "run.googleapis.com"
   disable_on_destroy = true
 }
 
-resource "google_storage_bucket" "cc-static-generated" {
-  name          = var.project_name
-  location      = var.region
-  force_destroy = true
-
-  uniform_bucket_level_access = true
-
-  website {
-    main_page_suffix = "index.html"
-    not_found_page   = "404.html"
-  }
-  cors {
-    origin          = ["*/*"]
-    method          = ["GET"]
-    response_header = ["*"]
-    max_age_seconds = 3600
-  }
-
+resource "google_cloud_run_service" "cc-generated" {
+  name     = var.project_name
+  location = var.region
   
-  # Waits for the GCP API to be enabled
-  depends_on = [google_project_service.apis]
+  template {
+    spec {
+      containers {
+        image = "gcr.io/google-samples/hello-app:1.0"
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+
+  # Waits for the Cloud Run API to be enabled
+  depends_on = [google_project_service.run_api]
 }
 
+# Allow unauthenticated users to invoke the service
+resource "google_cloud_run_service_iam_member" "run_all_users" {
+  service  = google_cloud_run_service.cc-generated.name
+  location = google_cloud_run_service.cc-generated.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
 
-# Allow unauthenticated users to view the service
-resource "google_storage_bucket_access_control" "public_rule" {
-  bucket = google_storage_bucket.cc-static-generated.name
-  role   = "READER"
-  entity = "allUsers"
+output "service_url" {
+  value = google_cloud_run_service.cc-generated.status[0].url
 }
