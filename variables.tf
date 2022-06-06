@@ -22,4 +22,5 @@ variable "region" {
 variable "zone" {
     type = string
     description = "GCP zone to host the generated solution"
+    default = ""
 }
