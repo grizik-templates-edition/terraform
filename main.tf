@@ -5,6 +5,7 @@ locals {
     "storage-api.googleapis.com",
     "storage.googleapis.com",
     "iam.googleapis.com",
+    "dns.googleapis.com"
   ]
 }
 
