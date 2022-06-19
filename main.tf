@@ -16,6 +16,14 @@ resource "google_project_service" "apis" {
   disable_on_destroy = true
 }
 
+# Allow unauthenticated users to view the service
+resource "google_storage_bucket_access_control" "public_rule" {
+  bucket = google_storage_bucket.cc-static-generated.name
+  role   = "READER"
+  entity = "allUsers"
+}
+
+
 resource "google_storage_bucket" "cc-static-generated" {
   name          = var.project_name
   location      = var.region
@@ -24,23 +32,7 @@ resource "google_storage_bucket" "cc-static-generated" {
   website {
     main_page_suffix = "index.html"
     not_found_page   = "404.html"
-  }
-  cors {
-    origin          = ["*/*"]
-    method          = ["GET"]
-    response_header = ["*"]
-    max_age_seconds = 3600
-  }
-
-  
+  }  
   # Waits for the GCP API to be enabled
   depends_on = [google_project_service.apis]
-}
-
-
-# Allow unauthenticated users to view the service
-resource "google_storage_bucket_access_control" "website_read" {
-  bucket = google_storage_bucket.cc-static-generated.name
-  role   = "READER"
-  entity = "allUsers"
 }
