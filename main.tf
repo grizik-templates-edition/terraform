@@ -38,7 +38,7 @@ resource "google_storage_bucket" "cc-static-generated" {
 
 
 # Allow unauthenticated users to view the service
-resource "google_storage_bucket_access_control" "public_rule" {
+resource "google_storage_bucket_access_control" "website_read" {
   bucket = google_storage_bucket.cc-static-generated.name
   role   = "READER"
   entity = "allUsers"

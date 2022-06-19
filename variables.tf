@@ -17,6 +17,7 @@ variable "project_name" {
 variable "region" {
     type = string
     description = "GCP region to host the generated solution"
+    default = ""
 }
 
 variable "zone" {
